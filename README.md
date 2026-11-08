@@ -4,8 +4,6 @@ LaTeX source for the article *"Formalization of Sierpinski's carpet and similar 
 
 ![img-022](images/img-022.jpg)
 
-![img-020](images/img-020.jpg)
-
 ## Abstract
 
 Fractals are interesting mathematical objects, with the peculiar properties of self-similarity and non-integer Hausdorff dimension. Such objects are generated using diverse methods. The starting point of this article, Sierpinski's carpet, is a fractal that is traditionally described using an iterated function system. In this article, we discuss the construction of a formal definition in relation to coordinates and the iteration stage; thus treating the fractal as a set of points. We then generalize both in shapes, diversity and dimensions.
