@@ -18,9 +18,9 @@ The advantages of this method are:
 The paper formalizes Sierpinski's carpet as a union of centered, evenly arranged square cuts. At iteration $n$, the number of cuts is $3^{2(n-1)}$ and the side of each cut is $\frac{1}{3^n}$ of the primary square's side. Cuts are regarded as an interference pattern of square waves (values 0 = void, 1 = solid), intersected across consecutive iterations by multiplication.
 
 The construction uses a cosine-based square wave:
-\[
+$$
 \frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi x 3^{n-1})+\cos\left(\frac{\pi}{3}\right)\right)+1\right)\in\{0,1\}
-\]
+$$
 combined as an interference of a wave along $x$ and another along $y$. The method is then generalized to higher-dimensional versions ($S_{2,2}^d$), including Sierpinski's triangle and its higher-dimensional relatives, with Minkowski dimension computed directly, e.g. $\frac{\log(d+1)}{\log 2}$ for the family $S_{2,2}^d$.
 
 ## Contents
