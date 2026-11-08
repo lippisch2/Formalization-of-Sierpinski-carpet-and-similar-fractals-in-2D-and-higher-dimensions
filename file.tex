@@ -1,0 +1,460 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{mathtools}
+\usepackage{hyperref}
+
+\geometry{margin=1in}
+
+\title{Formalization of Sierpinski's carpet and similar fractals in 2D and higher dimensions}
+\author{M. F. Hamza Ryad}
+\date{April 12, 2017}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Fractals are interesting mathematical objects, with the peculiar properties of self-similarity and non-integer Hausdorff dimension. Such objects are generated using diverse methods. The starting point of this article, Sierpinski's carpet, is a fractal that is traditionally described using an iterated function system. In this article, we discuss the construction of a formal definition in relation to coordinates and the iteration stage; thus treating the fractal as a set of points. We then generalize both in shapes, diversity and dimensions.
+
+The advantages of this method are:
+\begin{itemize}
+  \item An easy implementation.
+  \item Generalization and variations.
+  \item Robust description for higher-dimensional versions.
+  \item Access to area calculation by integrating such a formula at a defined iteration.
+  \item Direct calculation of the Minkowski dimension.
+\end{itemize}
+\end{abstract}
+
+\tableofcontents
+
+\section{Formalization of the 2D Sierpinski's carpet and generalization}
+
+Sierpinski's carpet fractal can be regarded as a union of centered, evenly arranged square cuts such that the number of cuts at iteration $n$ is $3^{2(n-1)}$ and the side of each cut is $\frac{1}{3^n}$ of the primary square's side. For simplicity's sake, we will consider the primary square at $n=0$ to be of dimensions $1\times 1$.
+
+We can observe that the cuts at each iteration can be regarded as an interference pattern of square waves. Let $0$ and $1$ be the values that these waves can take such that $0$ is void and $1$ is solid.
+We could then intersect the patterns of consecutive iterations by a simple multiplication, taking advantage of $0$ so that regions that are void in a previous iteration remain a void. The interference is an addition of a wave going by $x$ and another by $y$.
+
+The cosine function is an excellent candidate to make an odd square wave. Its period being $2\pi$, $\cos(2\pi x)$ squeezes the period inside the interval $[0,1]$. At each iteration the square wave will need to fit $3^{n-1}$ periods in this interval, we then write:
+\[
+\cos(2\pi x 3^{n-1}).
+\]
+
+We know that it spends half of its period below $0$, but we need a third of a period to be below zero so we add $\cos\left(\frac{\pi}{3}\right)$ and we have
+\[
+\cos(2\pi x 3^{n-1}) + \cos\left(\frac{\pi}{3}\right).
+\]
+Now to make it square we apply the sign function $\operatorname{sgn}(\cdot)$ to it with a few adjustments so that it gives only $0$ or $1$. We then have:
+\[
+\frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi x 3^{n-1})+\cos\left(\frac{\pi}{3}\right)\right)+1\right)\in\{0,1\}.
+\]
+
+The interference formula is then
+\begin{equation}
+\frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi x 3^{n-1})+\cos\left(\frac{\pi}{3}\right)\right)+1\right)
++
+\frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi y 3^{n-1})+\cos\left(\frac{\pi}{3}\right)\right)+1\right)
+\in \{0,1,2\}.
+\end{equation}
+
+Simply put, in order for any point $A(x,y)\in\mathbb{R}^2$ with $0\le (x,y)\le 1$ to be void at an iteration $n$, its coordinates must give $0$ in the above formula, in other words it must coincide with the interference of two holes in the square waves.
+
+We can say that (1) checks if $A$ is void or solid at any iteration $n$. Now to intersect each iteration's cuts with those of the next iteration we put (1) inside a product where $n$ goes from $1$ to $\infty$. But only after putting (1) inside a sign function to prevent the product from degenerating and only keeping the information of void or solid:
+\begin{equation}
+\prod_{n=1}^{\infty}
+\operatorname{sgn}\left(
+\frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi x 3^{n-1})+\cos\left(\frac{\pi}{3}\right)\right)+1\right)
++
+\frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi y 3^{n-1})+\cos\left(\frac{\pi}{3}\right)\right)+1\right)
+\right)\in\{0,1\}.
+\end{equation}
+
+After some proper simplification, (2) becomes:
+\begin{equation}
+\prod_{n=1}^{\infty}
+\operatorname{sgn}\left(
+\operatorname{sgn}\left(\cos(2\pi x 3^{n-1})+\frac{1}{2}\right)
++
+\operatorname{sgn}\left(\cos(2\pi y 3^{n-1})+\frac{1}{2}\right)
++2
+\right)\in\{0,1\}.
+\end{equation}
+
+(3) checks if $A$ is part of Sierpinski's carpet after $n$ iterations.
+
+Knowing that the square wave is periodic, the pattern will repeat in each interval $[k,k+1]$, $k\in\mathbb{N}$. We conclude that for any point $A(x,y)\in\mathbb{R}^2$ with $k\le x\le k+1$ and $k'\le y\le k'+1$ and $k,k'\in\mathbb{N}$, letting $S$ be the set of points making Sierpinski's carpet at any iteration $n$, then
+\[
+A\in S \iff
+\prod_{n=1}^{\infty}
+\operatorname{sgn}\left(
+\operatorname{sgn}\left(\cos(2\pi x 3^{n-1})+\frac{1}{2}\right)
++
+\operatorname{sgn}\left(\cos(2\pi y 3^{n-1})+\frac{1}{2}\right)
++2
+\right)=1.
+\]
+
+Going back to (2) one can generalize in the following way:
+\begin{equation}
+\prod_{n=1}^{\infty}
+\operatorname{sgn}\left(
+\frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi x k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)+1\right)
++
+\frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi y k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)+1\right)
+\right)\in\{0,1\}.
+\end{equation}
+
+Where $k$ controls the number of cuts and $p$ its side, thus the proportion that is erased.
+
+Example of Matlab/Freemat code implementation for (5):
+\begin{verbatim}
+function frac(k,p,pointsdensity,iter)
+
+x=linspace(0,1,pointsdensity);
+y=linspace(0,1,pointsdensity);
+[xgrid,ygrid]=meshgrid(x,y);
+state=ones(length(x),length(x));
+for n=1:iter
+for i=1:numel(state)
+state(i)=
+state(i)*sign(0.5*(sign((cos(2*pi*(k)^(n-1)*xgrid(i)))+cos(pi/(p)))+1) + ...
+0.5*(sign((cos(2*pi*(k)^(n-1)*ygrid(i)))+cos(pi/(p)))+1));
+end
+end
+colormap(flipud(gray));
+imagesc(x,y,state);
+axis equal
+\end{verbatim}
+
+\section{Alternate constructions}
+
+\subsection{Vicsek's fractal}
+
+Following a similar construction we can describe Vicsek's fractal:
+For any point $A(x,y)\in\mathbb{R}^2$ with $k\le x\le k+1$ and $k'\le y\le k'+1$ and $k,k'\in\mathbb{N}$, let $V$ be the set of points making Vicsek's fractal at any iteration $n$. Then
+\[
+A\in V \text{ in the cross form} \iff
+\prod_{n=1}^{\infty}
+\operatorname{sgn}\left(
+2-\operatorname{sgn}\left(\cos(2\pi x 3^{n-1})+\frac{1}{2}\right)
+-\operatorname{sgn}\left(\cos(2\pi y 3^{n-1})+\frac{1}{2}\right)
+\right)=1.
+\]
+
+\[
+A\in V \text{ in the saltire form} \iff
+\prod_{n=1}^{\infty}
+\left|
+\frac{1}{2}\operatorname{sgn}\left(\cos(2\pi x 3^{n-1})+\frac{1}{2}\right)
++
+\operatorname{sgn}\left(\cos(2\pi y 3^{n-1})+\frac{1}{2}\right)
+\right|=1.
+\]
+
+\subsection{The sin function version and Sierpinski's triangle}
+
+A variation of (5) can be introduced by replacing the cosine function with sine, which will give us an odd distribution of cuts:
+\begin{equation}
+\prod_{n=1}^{\infty}
+\operatorname{sgn}\left(
+\frac{1}{2}\left(\operatorname{sgn}\left(\sin(2\pi x k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)+1\right)
++
+\frac{1}{2}\left(\operatorname{sgn}\left(\sin(2\pi y k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)+1\right)
+\right)\in\{0,1\}.
+\end{equation}
+
+Fortunately enough, we can describe Sierpinski's triangle using (8), with $k=2$ and $p=2$.
+
+\subsection{Cantor's set}
+
+By using a one-dimensional version of (2) on the $x$ axis only, we obtain Cantor's set $(C)$:
+\[
+A(x)\in C \iff
+\prod_{n=1}^{\infty}
+\frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi x 3^{n-1})+\cos\left(\frac{\pi}{3}\right)\right)+1\right)=1.
+\]
+
+\subsection{Pre-interference variations}
+
+Other variations can be explored for example by taking the general formula (5) and trying to leave the cosine wave intact before the interference:
+\begin{equation}
+\operatorname{sgn}\left(
+\prod_{n=1}^{\infty}
+\operatorname{sgn}\left(
+\cos(2\pi x k^{n-1})+\cos(2\pi y k^{n-1})+2\cos\left(\frac{\pi}{p}\right)
+\right)+1
+\right)\in\{0,1\}.
+\end{equation}
+
+We can notice an oscillation of certain regions between void and solid state due to the fact the value inside the product can be $-1$, which results in parts of cuts in $n$ becoming solid in $n+1$ and so on. If we fix that we have this variant:
+\begin{equation}
+\prod_{n=1}^{\infty}
+\operatorname{sgn}\left(
+\operatorname{sgn}\left(
+\cos(2\pi x k^{n-1})+\cos(2\pi y k^{n-1})+2\cos\left(\frac{\pi}{p}\right)
+\right)+1
+\right)\in\{0,1\}.
+\end{equation}
+
+Even further, we can use modulo to get a controlled amount of shades:
+\begin{equation}
+\prod_{n=1}^{\infty}
+\left(
+\cos(2\pi x k^{n-1})+\cos(2\pi y k^{n-1})+2\cos\left(\frac{\pi}{p}\right)
+\right)\bmod s.
+\end{equation}
+
+Where $s$ is the number of shades.
+
+\subsection{A relation to $\pi$}
+
+The Wallis sieve is a variation of Sierpinski's carpet that has an area equal to $\pi/4$, it can be described by the following formula:
+\[
+A(x,y)\in \text{Wallis sieve} \iff
+\prod_{n=1}^{\infty}
+\operatorname{sgn}\left(
+\operatorname{sgn}\left(\cos(2\pi x(2n-1)!!)+\cos\left(\frac{\pi}{2n+1}\right)\right)
++
+\operatorname{sgn}\left(\cos(2\pi y(2n-1)!!)+\cos\left(\frac{\pi}{2n+1}\right)\right)
++2
+\right)=1.
+\]
+
+A possible result would be this identity:
+\[
+\int_0^1\int_0^1
+\prod_{n=1}^{\infty}
+\operatorname{sgn}\left(
+\operatorname{sgn}\left(\cos(2\pi x(2n-1)!!)+\cos\left(\frac{\pi}{2n+1}\right)\right)
++
+\operatorname{sgn}\left(\cos(2\pi y(2n-1)!!)+\cos\left(\frac{\pi}{2n+1}\right)\right)
++2
+\right)
+\,dx\,dy
+=
+\frac{\pi}{4}.
+\]
+
+\section{Extrapolation to 3D}
+
+A direct extrapolation of (2) to 3D won't give us Menger's sponge but rather a version where only the central cubes are cut away which would make it indiscernible from a normal cube from the outside. But one can still define Menger's sponge by saying that for $A(x,y,z)$, at least two of its coordinates have to coincide with a hole in a square wave for it to be a void. Such that each face will look like Sierpinski's carpet. Let $M$ be the set of such points:
+\[
+A(x,y,z)\in M \iff
+\prod_{n=1}^{\infty}
+\left[
+\frac{1}{4}\left(
+\operatorname{sgn}\left(\cos(2\pi x 3^{n-1})+\cos\left(\frac{\pi}{3}\right)\right)
++
+\operatorname{sgn}\left(\cos(2\pi y 3^{n-1})+\cos\left(\frac{\pi}{3}\right)\right)
++
+\operatorname{sgn}\left(\cos(2\pi z 3^{n-1})+\cos\left(\frac{\pi}{3}\right)\right)
++3
+\right)
+\right]=1.
+\]
+
+Note that the formula is rearranged so that it outputs $1$ or $0$ according to our new criteria.
+
+Here again we can generalize and explore. Let $C_{k,p}^3$ be the set of points defining these 3D fractals for different values of $k$ and $p$:
+\[
+A(x,y,z)\in C_{k,p}^3 \iff
+\prod_{n=1}^{\infty}
+\left[
+\frac{1}{4}\left(
+\operatorname{sgn}\left(\cos(2\pi x k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)
++
+\operatorname{sgn}\left(\cos(2\pi y k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)
++
+\operatorname{sgn}\left(\cos(2\pi z k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)
++3
+\right)
+\right]=1.
+\]
+
+A variation using the sine function. Let $S_{k,p}^3$ be the sets defined by this formula:
+\[
+A(x,y,z)\in S_{k,p}^3 \iff
+\prod_{n=1}^{\infty}
+\left[
+\frac{1}{4}\left(
+\operatorname{sgn}\left(\sin(2\pi x k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)
++
+\operatorname{sgn}\left(\sin(2\pi y k^{n-1})+\sin\left(\frac{\pi}{p}\right)\right)
++
+\operatorname{sgn}\left(\sin(2\pi z k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)
++3
+\right)
+\right]=1.
+\]
+
+\section{Generalization to higher dimensions $d$}
+
+Along all these formulae, one can spot a pattern. What we're doing is checking if a point is void or solid in a fractal by checking if its coordinates verify a certain criteria. In Sierpinski's carpet and variations that result from the general formula (5) the criteria was that each coordinate had to coincide with a void at some point along the iterations. All is based on a formula that checks if a point's coordinate is on a void or solid on its axis at iteration $n$, all the other machinery is only there to express our criteria and to compile the information (normalizing the sum to $\{1,0\}$) as iterations advance (product).
+
+Let's call this formula $H(t,k,p,n)$, we have:
+\[
+H(t,k,p,n)=\frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi t k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)+1\right)\in\{0,1\}.
+\]
+
+For 3D, the criteria was that at least two of the point's coordinates gave $0$ when put inside this formula, for it to be void at a certain iteration. And this criteria is valid for higher dimensions.
+
+We define a $d$-sponge, as a sponge of dimension $d$ represented by the set $C_{k,p}^d$. Let’s name the dimensions this way: $(t_1,t_2,\dots,t_d)$.
+\[
+\sum_{i=1}^d H(t_i,k,p,n) = [[0,d]].
+\]
+
+Saying that at least two coordinates have to give zero for a point to be void means that, for $d>2$:
+\[
+A(t_1,t_2,\dots,t_d)\notin C_{k,p}^d \iff \sum_{i=1}^d H(t_i,k,p,n)\le d-2.
+\]
+
+Conversely,
+\[
+A(t_1,t_2,\dots,t_d)\in C_{k,p}^d \iff \sum_{i=1}^d H(t_i,k,p,n)> d-2.
+\]
+
+A generalization of the way this has been done in 3D gives the following formula (while $d>1$):
+\[
+A(t_1,t_2,\dots,t_d)\in C_{k,p}^d \iff
+\prod_{n=1}^{\infty}
+\left[\frac{1}{d-1}\sum_{i=1}^d H(t_i,k,p,n)\right]=1,
+\]
+equivalently
+\[
+\prod_{n=1}^{\infty}
+\left[\frac{1}{d-1}\sum_{i=1}^d \frac{1}{2}\left(\operatorname{sgn}\left(\cos(2\pi t_i k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)+1\right)\right]=1,
+\]
+or
+\[
+\prod_{n=1}^{\infty}
+\left[\frac{1}{2(d-1)}\left(d+\sum_{i=1}^d \operatorname{sgn}\left(\cos(2\pi t_i k^{n-1})+\cos\left(\frac{\pi}{p}\right)\right)\right)\right]=1.
+\]
+
+Here are a few 3D cuts out of a Menger's 4-sponge $(C_{3,3}^4)$, where $t$ is the 4th dimension.
+
+A sin function variation is possible in this case too. Such groups would be noted $S_{k,p}^d$.
+
+\section{Minkowski-Bouligand dimension or box-counting dimension}
+
+\subsection{Calculation}
+
+The box-counting dimension is a way to determine a shape's dimension, by counting the number of boxes $N(\epsilon)$ required to cover a set $S$ representing a fractal and seeing how the number changes as we use a finer grid as the side of each box $\epsilon$ gets smaller:
+\[
+\dim_{\mathrm{box}}(S)=\lim_{\epsilon\to 0}\frac{\log N(\epsilon)}{\log \frac{1}{\epsilon}}.
+\]
+
+To implement such an algorithm on a formal form one can profit from the fact that $d$-fractals represented by the sets $C_{k,p}^d$ and $S_{k,p}^d$ are at each iteration $n$ made out of a finite number of $d$-dimensional boxes themselves. Which means that there is a value for $\epsilon$ for which the estimation of $\dim_{\mathrm{box}}(S)$ will no longer change as we decrease $\epsilon$ for a fixed $n$.
+
+To get $N(\epsilon)$, we integrate (19) over a discrete amount of ranges of length $\epsilon$ for all coordinates. By doing this we check for the presence of points from $C_{k,p}^d$ or $S_{k,p}^d$ on boxes of dimension $d$ and side $\epsilon$. The integral will return $0$ for an empty region and a positive number otherwise. We then sum the sign $\operatorname{sgn}$ of all these integrals.
+
+By observation, $\epsilon$ will be the shortest side possible on a fractal, and is given by:
+\[
+\epsilon_C=\frac{p-1}{2pk^{n-1}},\qquad
+\epsilon_S=
+\begin{cases}
+\frac{p-2}{4pk^{n-1}}, & p\neq 2,\\[4pt]
+\frac{1}{2k^{n-1}}, & p=2.
+\end{cases}
+\]
+
+For $C_{k,p}^d$ and $S_{k,p}^d$ sets and $k,p\in\mathbb{N}$.
+
+We sum the integrals of (19) or its sin variant, in the manner described above. We introduce cycles according to each variable's integral in such a way that ensures scanning through all $d$-boxes within a unit range where the sets are contained.
+
+Let $P(k,p,n,t_1,\dots,t_d)$ be the formula in (19) (whether it's the cos or sin version) and $N(\epsilon,k,p,n,d)$ be the optimal number of boxes for an iteration $n$, we have:
+\[
+N(\epsilon,k,p,n,d)=\cdots
+\]
+(22) can be used to actually determine the number of boxes in the box counting algorithm to calculate the Minkowski dimension of any shape defined using a function similar to $P$.
+
+(20) becomes:
+\[
+\dim_{\mathrm{box}}(S)=\lim_{n\to\infty}\frac{\log N(\epsilon,k,p,n,d)}{\log \frac{1}{\epsilon}}.
+\]
+
+Fractals from the families $C_{k,p}^d$ and $S_{k,p}^d$ where $k,p\in\mathbb{N}$ that don't have cuts overlap will have a perfect self-similarity, and thus their Minkowski dimension can be computed since the first iteration. Such fractals have the following properties:
+for $C_{k,p}^d$: $k$ is odd and $k=p$.
+for $S_{k,p}^d$: at least when $p=2$ or $k$ is odd when $p$ is even, other cases are possible and to be determined.
+
+Fractals with overlap will see their Minkowski dimension change as $n\to 0$ according to (23).
+
+\section{Minkowski dimension of famous fractals and their higher-dimension relative}
+
+The family of fractals $C_{3,3}^d$, which includes Sierpinski's carpet and the Menger sponge along higher Menger $d$-sponges, have perfect self-similarity which means that no consecutive cuts will ever overlap, then the optimal $\epsilon$ is found at the first iteration. We have:
+\[
+\epsilon_{C_{3,3}^d}=\frac{3-1}{2\times 3\times 3^{1-1}}=\frac{1}{3}
+\]
+and
+\[
+\dim_{\mathrm{box}}(C_{3,3}^d)=\frac{\log N\!\left(\frac{1}{3},3,3,1,d\right)}{\log 3}.
+\]
+
+Using (22) and (23) we have the following values:
+
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+d-value & Minkowski dimension\\
+\hline
+2 & $\dfrac{\log 8}{\log 3}=1.89278926071$\\
+3 & $\dfrac{\log 20}{\log 3}=2.72683302786$\\
+4 & $\dfrac{\log 48}{\log 3}=3.52371901429$\\
+5 & $\dfrac{\log 112}{\log 3}=4.2949627634472520085$\\
+6 & $\dfrac{\log 256}{\log 3}=5.0474380285716594968$\\
+\hline
+\end{tabular}
+\end{center}
+
+The first two values are consistent with what is found in the literature, the rest of the values is not found.
+
+For $C_{5,5}^d$:
+
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+d-value & Minkowski dimension\\
+\hline
+2 & $\dfrac{\log 24}{\log 5}=1.9746358687061644471$\\
+3 & $\dfrac{\log 112}{\log 5}=2.9317681874157397594$\\
+4 & $\dfrac{\log 512}{\log 5}=3.8760890226605374560$\\
+5 & $\dfrac{\log 2304}{\log 5}=4.8106248535591149956$\\
+6 & $\dfrac{\log 10240}{\log 5}=5.7374421388073235574$\\
+\hline
+\end{tabular}
+\end{center}
+
+Now for the family $S_{2,2}^d$ represented by Sierpinski's triangle and higher-dimensional relatives. We have:
+\[
+\epsilon_{S_{2,2}^d}=\frac{1}{2}
+\]
+and
+\[
+\dim_{\mathrm{box}}(S_{2,2}^d)=\frac{\log N(1/2,2,2,1,d)}{\log 2}.
+\]
+
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+d-value & Minkowski dimension\\
+\hline
+2 & $\dfrac{\log 3}{\log 2}=1.58496250072$\\
+3 & $\dfrac{\log 4}{\log 2}=2$\\
+4 & $\dfrac{\log 5}{\log 2}=2.3219280948873623479$\\
+5 & $\dfrac{\log 6}{\log 2}=2.5849625007211561815$\\
+6 & $\dfrac{\log 7}{\log 2}=2.8073549220576041074$\\
+\hline
+\end{tabular}
+\end{center}
+
+We notice that so far the Minkowski dimension of $S_{2,2}^d$ is of the form:
+\[
+\frac{\log(d+1)}{\log 2},
+\]
+which would mean that the family $S_{2,2}^d$ reaches a Minkowski dimension $3$ at $d=8$.
+
+\end{document}

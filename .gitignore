@@ -1,0 +1,23 @@
+# LaTeX compilation artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.pdf
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+
+# Editors
+*.swp
+*.swo
+*~
+.DS_Thumbs
+.DS_Store
