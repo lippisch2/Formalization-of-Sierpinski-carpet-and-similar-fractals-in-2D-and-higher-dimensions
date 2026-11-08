@@ -30,6 +30,25 @@ combined as an interference of a wave along $x$ and another along $y$. The metho
 - `file.tex` — main LaTeX source (article class, `amsmath`, `amssymb`, `amsthm`, `graphicx`, `hyperref`)
 - `images/` — 23 figures (`img-000.jpg` … `img-022.jpg`) extracted from the source PDF
 - `web/index.html` — example interactive 3D implementation (Three.js) of the formalization: Sierpinski carpet / Menger sponge / higher sponges in 2D–6D, with presets, slice controls and Minkowski dimension readout
+- `matlab/` — MATLAB implementations of the paper's formalization (cosine/sine square-wave families, 2D–5D)
+
+## MATLAB implementations
+
+The `matlab/` folder contains MATLAB scripts that implement the paper's formalization:
+
+**Core — cosine/sine families matching the paper:**
+- `sarpienskicos.m` — 2D Sierpinski carpet (cosine family `Cᵏᵖᵈ`)
+- `sarpienskisin.m` — 2D Sierpinski carpet (sine family `Sᵏᵖᵈ`)
+- `sarpienskicos3D.m` — 3D Menger sponge (d=3)
+- `sarpienskicos4D.m` — 4D Menger sponge (d=4)
+- `sarpienskicos5D.m` — 5D Menger sponge (d=5)
+
+**Variants / experiments:**
+- `hamzcos.m`, `boxcos.m`, `sarpienskicospi.m`, `sarpienskicose.m`, `pilin.m`, `cantor.m`
+
+### Dependency note
+
+`sarpienskicos3D.m` calls **`PATCH_3Darray.m`** to render the 3D voxel array. That file is **not** included in this repository. It was written by Adam H. Aitkenhead (The Christie NHS Foundation Trust, 2010) and must be obtained separately — see the comment header inside `sarpienskicos3D.m` for details.
 
 ## Interactive web implementation
 
