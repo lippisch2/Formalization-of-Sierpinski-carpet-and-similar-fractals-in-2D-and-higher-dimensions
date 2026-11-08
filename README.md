@@ -25,10 +25,6 @@ and insert figures with:
 \includegraphics{img-000}
 ```
 
-## Source
-
-Converted from the original PDF: `Formalization of Sierpinski_s carpet and similar fractals in 2d and higher.pdf`
-
 ## License
 
 This repository contains a reformatted LaTeX transcription of the article. Please respect the original author's copyright.
