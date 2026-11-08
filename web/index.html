@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sierpinski d-sponges — Mathinfo</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; overflow: hidden; background: #d3d3d3; font-family: system-ui, -apple-system, sans-serif; }
+  #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+  #panel {
+    position: absolute; top: 16px; left: 16px; z-index: 10;
+    background: rgba(15, 17, 23, 0.92); color: #e8eaed;
+    padding: 14px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(6px); width: 310px; max-height: calc(100vh - 32px); overflow-y: auto;
+  }
+  #panel h2 { margin: 0 0 10px 0; font-size: 15px; letter-spacing: 0.4px; color: #7dd3fc; }
+  .formula { font-size: 11.5px; color: #7dd3fc; background: rgba(125,211,252,0.07);
+    border: 1px solid rgba(125,211,252,0.18); border-radius: 6px; padding: 6px 8px; margin-bottom: 10px; line-height: 1.5; }
+  .row { margin: 7px 0; }
+  label { display: block; font-size: 12px; margin-bottom: 3px; color: #9aa3ad; }
+  input[type="number"], input[type="range"], select { width: 100%; margin-top: 2px; }
+  input[type="number"] { background: #1a1d24; color: #e8eaed; border: 1px solid rgba(255,255,255,0.15); border-radius: 5px; padding: 5px; }
+  input[type="color"] { width: 100%; height: 30px; margin-top: 2px; padding: 0; border: 1px solid rgba(255,255,255,0.15); border-radius: 5px; background: #1a1d24; cursor: pointer; }
+  select { background: #1a1d24; color: #e8eaed; border: 1px solid rgba(255,255,255,0.15); border-radius: 5px; padding: 5px; }
+  input[type="checkbox"] { margin-right: 6px; }
+  button { margin-top: 10px; width: 100%; padding: 8px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06); color: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  button:hover { background: rgba(255,255,255,0.14); }
+  .two { display: flex; gap: 8px; }
+  .two .row { flex: 1; }
+  .muted { color: #6b7280; font-weight: 400; }
+  .hint { font-size: 10.5px; color: #6b7280; margin-top: 4px; line-height: 1.4; }
+  .hint.ok { color: #a7f3d0; }
+  #status { font-size: 11px; color: #7dd3fc; margin-top: 8px; min-height: 14px; white-space: pre-wrap; line-height: 1.45; }
+  #status.err { color: #f87171; }
+  #dimline { font-size: 10.5px; color: #a7f3d0; margin-top: 6px; line-height: 1.45; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="panel">
+  <h2>Sierpinski d-sponges</h2>
+  <div class="formula">
+    H(t,k,p,n) = &frac12;(sgn(cos(2&pi;k<sup>n&minus;1</sup>t) + cos(&pi;/p)) + 1)<br>
+    keep at iteration n &iff; &sum; H(t<sub>i</sub>) &gt; d &minus; 2
+  </div>
+
+  <div class="row"><label>Preset</label>
+    <select id="preset">
+      <option value="custom">Custom</option>
+      <option value="c33-2">Sierpinski carpet — C<sub>3,3</sub><sup>2</sup></option>
+      <option value="c33-3">Menger sponge — C<sub>3,3</sub><sup>3</sup></option>
+      <option value="c33-4">Menger 4-sponge — C<sub>3,3</sub><sup>4</sup></option>
+      <option value="c55-2">C<sub>5,5</sub><sup>2</sup></option>
+      <option value="c55-3">C<sub>5,5</sub><sup>3</sup></option>
+      <option value="s22-2">Sierpinski triangle — S<sub>2,2</sub><sup>2</sup></option>
+      <option value="s22-3">S<sub>2,2</sub><sup>3</sup></option>
+    </select>
+  </div>
+
+  <div class="row"><label>Family</label>
+    <select id="family">
+      <option value="cos">C<sub>k,p</sub><sup>d</sup> — cosine</option>
+      <option value="sin">S<sub>k,p</sub><sup>d</sup> — sine</option>
+    </select>
+  </div>
+
+  <div class="two">
+    <div class="row"><label>k</label><input type="number" id="k" value="3" min="2" max="12" step="1"></div>
+    <div class="row"><label>p</label><input type="number" id="p" value="3" min="2" max="12" step="1"></div>
+  </div>
+
+  <div class="row"><label>Dimension d</label>
+    <select id="dim">
+      <option value="2">2 — carpet (single layer)</option>
+      <option value="3" selected>3 — sponge (cubes)</option>
+      <option value="4">4 — 4-sponge (slice)</option>
+      <option value="5">5 — 5-sponge (slice)</option>
+      <option value="6">6 — 6-sponge (slice)</option>
+    </select>
+  </div>
+
+  <div class="row"><label>Grid (render cells per axis)</label><input type="number" id="grid" value="27" min="6" max="81"></div>
+  <div class="row"><label>Iterations (fractal depth n)</label><input type="number" id="iter" value="3" min="1" max="8"></div>
+  <div class="hint" id="resHint"></div>
+  <button id="fitGrid" style="display:none">Set grid to required</button>
+
+  <div id="slice4" class="row" style="display:none">
+    <label>t<sub>4</sub> slice <span id="s4Val" class="muted"></span></label>
+    <input type="range" id="s4" min="0" max="26" value="13">
+  </div>
+  <div id="slice5" class="row" style="display:none">
+    <label>t<sub>5</sub> slice <span id="s5Val" class="muted"></span></label>
+    <input type="range" id="s5" min="0" max="26" value="13">
+  </div>
+  <div id="slice6" class="row" style="display:none">
+    <label>t<sub>6</sub> slice <span id="s6Val" class="muted"></span></label>
+    <input type="range" id="s6" min="0" max="26" value="13">
+  </div>
+
+  <div class="row"><label>Cube size <span id="sizeVal">1</span></label><input type="range" id="size" min="0.3" max="1" step="0.05" value="1"></div>
+  <div class="row"><label><input type="checkbox" id="wire"> Wireframe</label></div>
+  <div class="row"><label>Cube color (hex) <span id="hexVal">#ffffff</span></label><input type="color" id="hex" value="#ffffff"></div>
+  <div class="row"><label><input type="checkbox" id="colorz"> Shade by position (keeps hex hue)</label></div>
+  <button id="rebuild">Build</button>
+  <div class="hint">Drag to rotate &bull; Scroll to zoom &bull; Right-click to pan</div>
+  <div id="status">loading…</div>
+  <div id="dimline"></div>
+</div>
+
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* =========================================================================
+   Implementation of the formalization in
+   "Formalization of Sierpinski's carpet and similar fractals in 2D and
+   higher dimensions" (M. F. Hamza Ryad, 2017).
+
+   Axis test (§1, §4):
+     H(t,k,p,n) = 1/2 * (sign(cos(2*pi*k^(n-1)*t) + cos(pi/p)) + 1)
+                = 1 (solid) or 0 (void)          [boundaries have measure 0]
+
+   d-dimensional rule (§4, eq. 18/19):
+     A in C_{k,p}^d  <=>  sum_i H(t_i,k,p,n) > d-2   at every iteration n.
+
+   Equivalently: at any iteration, remove a point when at least two of its
+   d coordinates are void.  d=2 -> Sierpinski carpet, d=3 -> Menger sponge,
+   d=4,5,6 -> higher Menger sponges.  Replacing cos by sin gives S_{k,p}^d.
+   ========================================================================= */
+
+const app = (function () {
+  const TWO_PI = Math.PI * 2;
+  let scene, camera, renderer, controls, instMesh = null, data = null, lastCamKey = '';
+  const $ = (id) => document.getElementById(id);
+
+  /* ---------- md core ---------------------------------------------------- */
+
+  function requiredGrid(iter, k, p) {
+    return p * Math.pow(k, iter - 1);           // finest void width ~ 1/requiredGrid
+  }
+
+  // Number of solid coordinates at iteration n (H = 1 for solid, 0 for void).
+  function solidCount(coords, k, cosp, n, family) {
+    const w = Math.pow(k, n - 1);
+    let s = 0;
+    for (let i = 0; i < coords.length; i++) {
+      const wave = family === 'sin'
+        ? Math.sin(TWO_PI * w * coords[i])
+        : Math.cos(TWO_PI * w * coords[i]);
+      if (wave + cosp > 0) s++;                // H = 1
+    }
+    return s;
+  }
+
+  // Generalized rule: survive every iteration iff sum H > d - 2.
+  function survives(coords, iter, k, cosp, family) {
+    const d = coords.length;
+    for (let n = 1; n <= iter; n++) {
+      if (solidCount(coords, k, cosp, n, family) <= d - 2) return false;
+    }
+    return true;
+  }
+
+  // Closed-form Minkowski dimension for the perfect self-similar families
+  // listed in the md (C_{k,k}, k odd; S_{k,2}, k even).
+  function exactDimension(family, k, p, d) {
+    if (family === 'cos') {
+      if (k !== p || k % 2 === 0) return null;
+      const N = Math.pow(k - 1, d - 1) * (k - 1 + d);
+      return { N, base: k, value: Math.log(N) / Math.log(k) };
+    }
+    if (p === 2 && k % 2 === 0) {
+      const q = k / 2;                         // solid sub-cells per axis per period
+      const N = Math.pow(q, d - 1) * (q + d);
+      return { N, base: k, value: Math.log(N) / Math.log(k) };
+    }
+    return null;
+  }
+
+  /* ---------- scene ------------------------------------------------------ */
+
+  function init() {
+    const canvas = $('canvas');
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xd3d3d3);
+
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 50000);
+    camera.position.set(35, 32, 42);
+
+    // clear, light-gray background (same value as the CSS body)
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0xd3d3d3, 1);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 0, 0);
+
+    // Neutral white lights. The ambient + main directional value still sums to
+    // 1.0 on the brightest face (so that face shows the chosen hex exactly),
+    // but the ambient share is lower for stronger light/shadow contrast.
+    scene.add(new THREE.AmbientLight(0xffffff, 0.40));
+    const dl = new THREE.DirectionalLight(0xffffff, 0.85);
+    dl.position.set(40, 50, 30); scene.add(dl);
+    const dl2 = new THREE.DirectionalLight(0xffffff, 0.10);
+    dl2.position.set(-40, -30, 20); scene.add(dl2);
+
+    window.addEventListener('resize', onResize);
+
+    // geometry / fractal controls
+    ['family', 'dim', 'k', 'p', 'iter'].forEach((id) => {
+      $(id).addEventListener('input', () => { $('preset').value = 'custom'; updateUI(); scheduleBuild(); });
+    });
+    $('grid').addEventListener('change', onGridChange);
+    ['s4', 's5', 's6'].forEach((id) => {
+      $(id).addEventListener('input', () => { updateSliceLabels(); if (+id.slice(1) <= +$('dim').value) scheduleBuild(); });
+    });
+    $('preset').addEventListener('change', applyPreset);
+    $('rebuild').addEventListener('click', build);
+    $('fitGrid').addEventListener('click', fitGridToIteration);
+
+    // appearance-only controls (no fractal recomputation)
+    $('size').addEventListener('input', (e) => { $('sizeVal').textContent = e.target.value; applySize(); });
+    $('wire').addEventListener('change', scheduleAppearance);
+    $('hex').addEventListener('input', (e) => { $('hexVal').textContent = e.target.value; scheduleAppearance(); });
+    $('hex').addEventListener('change', (e) => { $('hexVal').textContent = e.target.value; scheduleAppearance(); });
+    $('colorz').addEventListener('change', scheduleAppearance);
+
+    // initialise slice sliders at the edge (a solid coordinate, like the md's t=0)
+    [4, 5, 6].forEach((i) => { $('s' + i).value = 0; });
+    updateUI();
+    build();
+    animate();
+  }
+
+  function onGridChange() {
+    const n = Math.max(2, parseInt($('grid').value, 10) || 27);
+    $('grid').value = n;
+    [4, 5, 6].forEach((i) => {
+      const el = $('s' + i);
+      el.max = n - 1;
+      el.value = 0;
+    });
+    updateUI();
+    scheduleBuild();
+  }
+
+  function setPresetValues(family, k, p, d) {
+    $('family').value = family;
+    $('k').value = k;
+    $('p').value = p;
+    $('dim').value = String(d);
+    updateUI();
+  }
+
+  function applyPreset() {
+    const v = $('preset').value;
+    const map = {
+      'c33-2': ['cos', 3, 3, 2], 'c33-3': ['cos', 3, 3, 3], 'c33-4': ['cos', 3, 3, 4],
+      'c55-2': ['cos', 5, 5, 2], 'c55-3': ['cos', 5, 5, 3],
+      's22-2': ['sin', 2, 2, 2], 's22-3': ['sin', 2, 2, 3]
+    };
+    if (map[v]) setPresetValues(...map[v]);
+    build();
+  }
+
+  function updateUI() {
+    const d = parseInt($('dim').value, 10) || 3;
+    const n = Math.max(2, parseInt($('grid').value, 10) || 27);
+    [4, 5, 6].forEach((i) => {
+      $('slice' + i).style.display = i <= d ? 'block' : 'none';
+      const el = $('s' + i);
+      el.max = n - 1;
+      if (+el.value > n - 1) el.value = n - 1;
+    });
+    updateSliceLabels();
+    const it = Math.max(1, parseInt($('iter').value, 10) || 1);
+    const k = Math.max(2, parseInt($('k').value, 10) || 3);
+    const p = Math.max(2, parseInt($('p').value, 10) || 3);
+    const need = requiredGrid(it, k, p);
+    const hint = $('resHint');
+    const fit = $('fitGrid');
+    if (need > 81) {
+      hint.textContent = `iteration ${it} needs grid ≥ ${need}; above the 81-cell maximum, so the image will alias.`;
+      hint.className = 'hint';
+      fit.style.display = 'none';
+    } else if (n > need) {
+      // grid is sufficient but oversampled: propose lowering to save render time
+      hint.textContent = `iteration ${it} only needs grid ≥ ${need}; grid ${n} is oversampled. Lower to ${need} to save render time.`;
+      hint.className = 'hint';
+      fit.textContent = `Set grid to ${need}`;
+      fit.style.display = 'block';
+    } else if (n === need) {
+      hint.textContent = `iteration ${it}: grid ${n} = ${need} — fully resolved.`;
+      hint.className = 'hint ok';
+      fit.style.display = 'none';
+    } else {
+      hint.textContent = `iteration ${it} needs grid ≥ ${need}; grid ${n} is undersampled.`;
+      hint.className = 'hint';
+      fit.textContent = `Set grid to ${need}`;
+      fit.style.display = 'block';
+    }
+  }
+
+  function fitGridToIteration() {
+    const it = Math.max(1, parseInt($('iter').value, 10) || 1);
+    const k = Math.max(2, parseInt($('k').value, 10) || 3);
+    const p = Math.max(2, parseInt($('p').value, 10) || 3);
+    $('grid').value = Math.min(81, requiredGrid(it, k, p));
+    onGridChange();
+  }
+
+  function updateSliceLabels() {
+    const n = Math.max(2, parseInt($('grid').value, 10) || 27);
+    [4, 5, 6].forEach((i) => {
+      const el = $('s' + i);
+      const idx = parseInt(el.value, 10) || 0;
+      $('s' + i + 'Val').textContent = `= ${((idx + 0.5) / n).toFixed(4)} (${idx}/${n - 1})`;
+    });
+  }
+
+  function onResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  function frameScene(n) {
+    const r = Math.sqrt(3) * (n / 2) * 1.2 + 2;
+    camera.position.set(r * 0.92, r * 0.82, r * 1.12);
+    controls.target.set(0, 0, 0);
+    controls.update();
+  }
+
+  function clearMesh() {
+    if (instMesh) {
+      scene.remove(instMesh);
+      instMesh.geometry.dispose();
+      instMesh.material.dispose();
+      if (instMesh.dispose) instMesh.dispose();
+      instMesh = null;
+    }
+    data = null;
+  }
+
+  /* ---------- build the fractal ----------------------------------------- */
+
+  function build() {
+    try {
+      clearMesh();
+
+      const family = $('family').value;
+      const k = Math.max(2, parseInt($('k').value, 10) || 3);
+      const p = Math.max(2, parseInt($('p').value, 10) || 3);
+      const d = Math.min(6, Math.max(2, parseInt($('dim').value, 10) || 3));
+      const n = Math.max(2, parseInt($('grid').value, 10) || 27);
+      const iter = Math.max(1, parseInt($('iter').value, 10) || 1);
+      const need = requiredGrid(iter, k, p);
+      const cosp = Math.cos(Math.PI / p);
+
+      // fixed coordinates for dimensions 4..d
+      const slices = [];
+      for (let i = 4; i <= d; i++) slices.push(parseInt($('s' + i).value, 10) || 0);
+
+      const cubeSize = parseFloat($('size').value) || 1;
+      const half = (n - 1) / 2;
+      const colorz = $('colorz').checked;
+      const centers = [];
+      const shades = [];
+      let count = 0;
+
+      for (let x = 0; x < n; x++) {
+        const fx = (x + 0.5) / n;
+        for (let y = 0; y < n; y++) {
+          const fy = (y + 0.5) / n;
+          const zMax = d === 2 ? 1 : n;
+          for (let z = 0; z < zMax; z++) {
+            const zz = d === 2 ? 0 : z;
+            const fz = (zz + 0.5) / n;
+
+            let coords;
+            if (d === 2) coords = [fx, fy];
+            else if (d === 3) coords = [fx, fy, fz];
+            else {
+              coords = [fx, fy, fz];
+              for (let i = 0; i < slices.length; i++) coords.push((slices[i] + 0.5) / n);
+            }
+
+            if (!survives(coords, iter, k, cosp, family)) continue;
+
+            // Brightness variation only: the hue/saturation always come from the hex picker.
+            let shade = 1;
+            if (colorz) {
+              const extra = slices.reduce((a, b, i) => a + b * (0.07 + i * 0.02), 0);
+              const t = (x + y + zz) / (3 * Math.max(1, n - 1));
+              shade = 0.62 + 0.38 * t + 0.06 * Math.sin(x * 0.2 + y * 0.15 + zz * 0.1 + extra);
+              shade = Math.max(0.5, Math.min(1, shade));
+            }
+
+            count++;
+            centers.push(x - half, y - half, d === 2 ? 0 : zz - half);
+            shades.push(shade);
+          }
+        }
+      }
+
+      const geo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+      // instanceColor carries the per-cube hex colour; do NOT enable vertexColors,
+      // because BoxGeometry has no per-vertex color attribute.
+      const mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+      instMesh = new THREE.InstancedMesh(geo, mat, Math.max(count, 1));
+      instMesh.count = count;
+      instMesh.frustumCulled = false;
+
+      const dummy = new THREE.Object3D();
+      for (let i = 0; i < count; i++) {
+        dummy.position.set(centers[3 * i], centers[3 * i + 1], centers[3 * i + 2]);
+        dummy.scale.set(1, 1, 1);
+        dummy.updateMatrix();
+        instMesh.setMatrixAt(i, dummy.matrix);
+      }
+      instMesh.instanceMatrix.needsUpdate = true;
+      scene.add(instMesh);
+
+      data = { n, d, count, shades, cubeSize };
+      applyAppearance();
+
+      const camKey = n + '/' + d;
+      if (camKey !== lastCamKey) { lastCamKey = camKey; frameScene(n); }
+
+      const positions = d === 2 ? n * n : n * n * n;
+      const sliceText = d > 3
+        ? '\nslice ' + slices.map((s, i) => `t${i + 4}=${((s + 0.5) / n).toFixed(4)}`).join(', ')
+        : '';
+      const warn = n < need
+        ? `\nwarning: grid ${n} cannot resolve iteration ${iter} (needs ≥ ${need}); the image is aliased.`
+        : '';
+
+      setStatus(
+        `Rendered ${count.toLocaleString()} / ${positions.toLocaleString()} cells${sliceText}\n` +
+        `${family === 'sin' ? 'S' : 'C'}_{${k},${p}}^${d} · grid ${n}/axis · iteration ${iter}` + warn,
+        false
+      );
+
+      const dim = exactDimension(family, k, p, d);
+      $('dimline').textContent = dim
+        ? `Minkowski dimension (md): log ${dim.N} / log ${dim.base} = ${dim.value.toFixed(6)}`
+        : 'Minkowski dimension: the md gives a closed form for perfect self-similar families (C_{k,k}, k odd; S_{k,2}, k even).';
+
+    } catch (err) {
+      setStatus('Error: ' + err.message, true);
+      console.error(err);
+    }
+  }
+
+  /* ---------- appearance ------------------------------------------------- */
+
+  function applySize() {
+    if (!instMesh || !data) return;
+    const size = parseFloat($('size').value) || 1;
+    if (Math.abs(size - data.cubeSize) < 1e-6) return;
+    const old = instMesh.geometry;
+    instMesh.geometry = new THREE.BoxGeometry(size, size, size);
+    if (old) old.dispose();
+    data.cubeSize = size;
+    instMesh.frustumCulled = false;
+  }
+
+  function applyAppearance() {
+    if (!instMesh || !data) return;
+    const wire = $('wire').checked;
+    const colorz = $('colorz').checked;
+    const hex = $('hex').value;
+    const mat = instMesh.material;
+    mat.wireframe = wire;
+    mat.transparent = wire;
+    mat.opacity = wire ? 0.38 : 1;
+    mat.depthWrite = !wire;
+    mat.needsUpdate = true;
+
+    const base = new THREE.Color(hex);
+    const c = new THREE.Color();
+    for (let i = 0; i < data.count; i++) {
+      c.copy(base);
+      if (colorz) c.multiplyScalar(data.shades[i]);
+      instMesh.setColorAt(i, c);
+    }
+    if (instMesh.instanceColor) instMesh.instanceColor.needsUpdate = true;
+  }
+
+  function setStatus(msg, isErr) {
+    const el = $('status');
+    el.textContent = msg;
+    el.className = isErr ? 'err' : '';
+  }
+
+  /* ---------- scheduling / render loop ---------------------------------- */
+
+  let pending = false;
+  function scheduleBuild() {
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(() => { pending = false; build(); });
+  }
+
+  let pendingAppearance = false;
+  function scheduleAppearance() {
+    if (pendingAppearance) return;
+    pendingAppearance = true;
+    requestAnimationFrame(() => { pendingAppearance = false; applyAppearance(); });
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  return { init, build };
+})();
+
+try { app.init(); } catch (e) {
+  document.getElementById('status').textContent = 'Init error: ' + e.message;
+  console.error(e);
+}
+</script>
+</body>
+</html>

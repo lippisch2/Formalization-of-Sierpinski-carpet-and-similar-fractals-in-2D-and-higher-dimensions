@@ -27,6 +27,18 @@ combined as an interference of a wave along $x$ and another along $y$. The metho
 
 - `file.tex` — main LaTeX source (article class, `amsmath`, `amssymb`, `amsthm`, `graphicx`, `hyperref`)
 - `images/` — 23 figures (`img-000.jpg` … `img-022.jpg`) extracted from the source PDF
+- `web/index.html` — example interactive 3D implementation (Three.js) of the formalization: Sierpinski carpet / Menger sponge / higher sponges in 2D–6D, with presets, slice controls and Minkowski dimension readout
+
+## Interactive web implementation
+
+`web/index.html` is a self-contained Three.js example that renders the formalization interactively:
+
+- Sierpinski carpet (d=2), Menger sponge (d=3), and higher Menger sponges (d=4–6)
+- Presets: `C₃,₃²`, `C₃,₃³`, `C₃,₃⁴`, `C₅,₅²`, `C₅,₅³`, `S₂,₂²`, `S₂,₂³`
+- Custom family (cosine/sine), grid, iterations, slice sliders for d>3
+- Live Minkowski dimension readout (`log N / log k`)
+
+Open `web/index.html` directly in a browser (it loads Three.js from a CDN, so an internet connection is needed on first load).
 
 ## Build
 
